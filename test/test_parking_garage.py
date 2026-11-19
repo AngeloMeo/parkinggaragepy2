@@ -1,4 +1,4 @@
-from datetime import datetime
+from datetime import datetime, timedelta
 from unittest import TestCase
 from unittest.mock import patch
 from unittest.mock import MagicMock
@@ -52,3 +52,33 @@ class TestParkingGarage(TestCase):
         n_spots = parking_garage.get_number_occupied_spots()
         self.assertEqual(2, n_spots)
 
+    @patch.object(SDL_DS3231, "__init__", return_value=None)
+    def test_check_rtc_configuration(self, mock_rtc: MagicMock):
+        parking_garage = ParkingGarage()
+        mock_rtc.assert_called_once()
+
+    @patch.object(SDL_DS3231, "read_datetime")
+    def test_parking_fee_2hrs(self, mock_exit_time: MagicMock):
+        mock_exit_time.return_value=datetime(2026,1,1, 5,0,0)
+        parking_garage = ParkingGarage()
+        entrytime = datetime(2026,1,1, 3,0,0)
+        fee = parking_garage.calculate_parking_fee(entrytime)
+        self.assertEqual(5, fee)
+
+    @patch.object(SDL_DS3231, "read_datetime")
+    def test_parking_fee_fraction_hrs(self, mock_exit_time: MagicMock):
+        mock_exit_time.return_value=datetime(2026,1,1, 5,1,0)
+        parking_garage = ParkingGarage()
+        entrytime = datetime(2026,1,1, 3,0,0)
+        fee = parking_garage.calculate_parking_fee(entrytime)
+        self.assertEqual(7.5, fee)
+
+    @patch.object(SDL_DS3231, "read_datetime")
+    def test_parking_fee_weekend_saturday_exact_hrs(self, mock_exit_time: MagicMock):
+        # 3 Gennaio 2026 è Sabato (weekday == 5)
+        # 2 ore * 2.5 = 5.0 -> +25% = 6.25
+        mock_exit_time.return_value = datetime(2026, 1, 3, 5, 0, 0)
+        parking_garage = ParkingGarage()
+        entrytime = datetime(2026, 1, 3, 3, 0, 0)
+        fee = parking_garage.calculate_parking_fee(entrytime)
+        self.assertEqual(6.25, fee)

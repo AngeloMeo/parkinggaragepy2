@@ -1,4 +1,4 @@
-from datetime import datetime
+from datetime import datetime, timedelta
 
 try:
     import RPi.GPIO as GPIO
@@ -23,7 +23,7 @@ class ParkingGarage:
         # See User Stories #1, #3-5
         GPIO.setmode(GPIO.BOARD) # Set the numbering schema to bord mode
         GPIO.setwarnings(False)
-        self.rtc = None # Variable not initialize yet (see User Story #3)
+        self.rtc = SDL_DS3231.SDL_DS3231() # User Story #3
         self.servo = None # Variable not initialize yet (see User Story #4)
         self.door_open = None # Variable not initialize yet (see User Story #4)
         self.red_light_on = None # Variable not initialize yet (see User Story #5)
@@ -47,9 +47,27 @@ class ParkingGarage:
                 count += 1
         return count
 
+
     def calculate_parking_fee(self, entry_time: datetime) -> float:
-        # See User Story #3
-        pass
+        exit_time = self.rtc.read_datetime()
+        exit_hrs = exit_time.hour
+        exit_min = exit_time.minute
+
+        entry_hrs = entry_time.hour
+        entry_min = entry_time.minute
+
+        hrs = exit_hrs - entry_hrs
+        if exit_min - entry_min > 0:
+            hrs += 1
+
+        fee = hrs * 2.5
+
+        # Maggiorazione del 25% se sabato (5) o domenica (6)
+        if exit_time.weekday() in (5, 6):
+            fee *= 1.25
+
+        return fee
+
 
     def open_garage_door(self) -> None:
         # See User Story #4
