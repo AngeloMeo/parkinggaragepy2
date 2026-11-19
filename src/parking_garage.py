@@ -25,7 +25,7 @@ class ParkingGarage:
         GPIO.setwarnings(False)
         self.rtc = SDL_DS3231.SDL_DS3231() # User Story #3
 
-        self.red_light_on = None # Variable not initialize yet (see User Story #5)
+        self.red_light_on = False # see User Story #5
 
         #US_1
         GPIO.setup(self.INFRARED_PIN1, GPIO.IN)
@@ -37,6 +37,9 @@ class ParkingGarage:
         self.servo = GPIO.PWM(self.SERVO_PIN, 50)  # see User Story #4
         self.servo.start(5)
         self.door_open = False  # see User Story #4
+
+        #US_5
+        GPIO.setup(self.LED_PIN, GPIO.OUT)
 
     def check_occupancy(self, pin: int) -> bool:
         # See User Story #1
@@ -83,11 +86,13 @@ class ParkingGarage:
 
     def turn_on_red_light(self) -> None:
         # See User Story #5
-        pass
+        GPIO.output(self.LED_PIN, True)
+        self.red_light_on = True
 
     def turn_off_red_light(self) -> None:
         # See User Story #5
-        pass
+        GPIO.output(self.LED_PIN, False)
+        self.red_light_on = False
 
     def manage_red_light(self) -> None:
         # See User Story #6
