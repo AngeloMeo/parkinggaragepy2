@@ -82,3 +82,34 @@ class TestParkingGarage(TestCase):
         entrytime = datetime(2026, 1, 3, 3, 0, 0)
         fee = parking_garage.calculate_parking_fee(entrytime)
         self.assertEqual(6.25, fee)
+
+    @patch.object(GPIO, "setup")
+    def test_servo_pin(self, mock_setup: MagicMock):
+        parking_garage = ParkingGarage()
+        mock_setup.assert_any_call(ParkingGarage.SERVO_PIN, GPIO.OUT)
+
+    @patch.object(GPIO, "setup")
+    @patch.object(GPIO.PWM, "__init__", return_value=None)
+    @patch.object(GPIO.PWM, "start")
+    def test_PWM(self, mock_start: MagicMock,mock_pwm: MagicMock ,mock_setup: MagicMock):
+        parking_garage = ParkingGarage()
+        mock_setup.assert_any_call(ParkingGarage.SERVO_PIN, GPIO.OUT)
+        mock_pwm.assert_any_call(ParkingGarage.SERVO_PIN, 50)
+        mock_start.assert_any_call(5)
+        self.assertFalse(parking_garage.door_open)
+
+    @patch.object(GPIO.PWM, "ChangeDutyCycle")
+    def test_open_garage_door(self, mock_ChangeDutyCycle: MagicMock):
+        parking_garage = ParkingGarage()
+        parking_garage.door_open = False
+        parking_garage.open_garage_door()
+        mock_ChangeDutyCycle.assert_called_once_with(10)
+        self.assertTrue(parking_garage.door_open)
+
+    @patch.object(GPIO.PWM, "ChangeDutyCycle")
+    def test_close_garage_door(self, mock_ChangeDutyCycle: MagicMock):
+        parking_garage = ParkingGarage()
+        parking_garage.door_open = True
+        parking_garage.close_garage_door()
+        mock_ChangeDutyCycle.assert_called_once_with(5)
+        self.assertFalse(parking_garage.door_open)
